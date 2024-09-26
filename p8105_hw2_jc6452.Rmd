@@ -1,0 +1,51 @@
+---
+title: "Homework 2"
+output: github_document
+---
+
+```{r, message = FALSE, echo = FALSE}
+library(tidyverse)
+library(readxl)
+library(haven)
+```
+
+# Problem 1
+Loading Data and initial cleaning
+```{r}
+nyc_transit = read_csv('data/NYC_Transit_Subway_Entrance_And_Exit_Data.csv', na = "") %>% 
+  janitor::clean_names() %>% 
+      pivot_longer(
+      cols = route1:route11,
+      names_to = "routes_served",
+      values_to = "subway",
+      values_transform = list(subway = as.character),
+      names_prefix = "route"
+    ) %>% 
+    select("line","station_name","station_latitude","station_longitude","routes_served", "entry", "vending", "entrance_type", "ada") 
+  
+```
+Questions answering some of the data
+```{r}
+distinct(nyc_transit, station_name)
+
+ada_compliant = nyc_transit %>% 
+  filter(ada == TRUE)
+distinct(ada_compliant, station_name)
+
+no_vending = nyc_transit %>% 
+  filter(vending == "NO")
+
+#entrance_proportion = length(pull(no_vending, entry=="YES")) / length(row(no_vending))
+```
+1. There are 356 distinct stations.
+2. There are 73 stations that are ADA compliant
+3. 
+```{r}
+mr_trash_wheel = read_excel("data/202309 Trash Wheel Collection Data.xlsx", sheet = "Mr. Trash Wheel", skip = 1) %>% janitor::clean_names()
+```
+```{r}
+#mr_trash_wheel_clean = 
+```
+
+
+
