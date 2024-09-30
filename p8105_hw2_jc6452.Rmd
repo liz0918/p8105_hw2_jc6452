@@ -16,12 +16,19 @@ nyc_transit = read_csv('data/NYC_Transit_Subway_Entrance_And_Exit_Data.csv', na 
   janitor::clean_names() %>% 
       pivot_longer(
       cols = route1:route11,
-      names_to = "routes_served",
-      values_to = "subway",
-      values_transform = list(subway = as.character),
+      names_to = "route_number",
+      values_to = "route_name",
+      values_transform = list(route_name = as.character),
       names_prefix = "route"
     ) %>% 
-    select("line","station_name","station_latitude","station_longitude","routes_served", "entry", "vending", "entrance_type", "ada") 
+  mutate(
+    entry = case_match(
+    entry,
+    "YES" ~ TRUE,
+    "NO" ~ FALSE
+  )) 
+# %>% 
+#  select("line","station_name","station_latitude","station_longitude","route_number",#"route_name", "entry", "vending", "entrance_type", "ada") 
   
 ```
 Questions answering some of the data
@@ -30,22 +37,71 @@ distinct(nyc_transit, station_name)
 
 ada_compliant = nyc_transit %>% 
   filter(ada == TRUE)
+
 distinct(ada_compliant, station_name)
 
 no_vending = nyc_transit %>% 
   filter(vending == "NO")
 
-#entrance_proportion = length(pull(no_vending, entry=="YES")) / length(row(no_vending))
+sum(no_vending$entry == TRUE)/nrow(no_vending)
+
 ```
 1. There are 356 distinct stations.
 2. There are 73 stations that are ADA compliant
-3. 
+3. The proportion of station/entrances without vending that allow entrance is 0.377.
+
+# Problem 2
 ```{r}
-mr_trash_wheel = read_excel("data/202309 Trash Wheel Collection Data.xlsx", sheet = "Mr. Trash Wheel", skip = 1) %>% janitor::clean_names()
+mr = read_excel("data/202309 Trash Wheel Collection Data.xlsx", sheet = "Mr. Trash Wheel", skip = 1) %>% janitor::clean_names() %>% 
+  select(dumpster:homes_powered) %>% 
+  filter(dumpster != "NA") %>% 
+  mutate(sports_balls = as.integer(sports_balls),
+         type = "mr_trash",
+         year = as.numeric(year)
+  )
+
+professor = read_excel("data/202309 Trash Wheel Collection Data.xlsx", sheet = "Professor Trash Wheel", skip = 1) %>% janitor::clean_names() %>%
+  filter(dumpster != "NA") %>% 
+  mutate(type = "professor_trash")
+
+gwynnda = professor_trash_wheel = read_excel("data/202309 Trash Wheel Collection Data.xlsx", sheet = "Gwynnda Trash Wheel", skip = 1) %>% janitor::clean_names() %>%
+  filter(dumpster != "NA") %>% 
+  mutate(type = "gwynnda")
+
+
+trash_wheel =
+  bind_rows(
+    mr, professor, gwynnda) %>% 
+  janitor::clean_names()
+
+summary(trash_wheel)
 ```
+Description of Trash Wheel data set
+
+
 ```{r}
-#mr_trash_wheel_clean = 
+
 ```
+
+# Problem 3
+```{r}
+bakers = read_csv("data/gbb_datasets/bakers.csv") %>% 
+  janitor::clean_names() %>% 
+  mutate(
+    first_name = sub("(\\w+\\.?).*", "\\1", bakers$baker_name)
+  )
+
+bakes = read_csv("data/gbb_datasets/bakes.csv", na = c("N/A" , "UNKNOWN", "", "Unknown")) %>%
+  janitor::clean_names()
+
+viewers = read_csv("data/gbb_datasets/viewers.csv", na = "NA") %>% 
+  janitor::clean_names()
+
+results = read_csv("data/gbb_datasets/results.csv", na = "NA") %>% 
+  janitor::clean_names()
+
+```
+
 
 
 
