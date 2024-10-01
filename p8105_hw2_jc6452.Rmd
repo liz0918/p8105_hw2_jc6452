@@ -88,17 +88,27 @@ Description of Trash Wheel data set
 bakers = read_csv("data/gbb_datasets/bakers.csv") %>% 
   janitor::clean_names() %>% 
   mutate(
-    first_name = sub("(\\w+\\.?).*", "\\1", bakers$baker_name)
+    first_name = sub("(\\w+\\.?).*", "\\1", baker_name)
   )
 
 bakes = read_csv("data/gbb_datasets/bakes.csv", na = c("N/A" , "UNKNOWN", "", "Unknown")) %>%
   janitor::clean_names()
 
 viewers = read_csv("data/gbb_datasets/viewers.csv", na = "NA") %>% 
-  janitor::clean_names()
+  janitor::clean_names() %>% 
+  pivot_longer(
+    cols = series_1:series_10,
+    names_to = "series",
+    values_to = "viewership",
+    names_prefix = "series_"
+  )
 
 results = read_csv("data/gbb_datasets/results.csv", na = "NA") %>% 
   janitor::clean_names()
+
+bakers_bakes = left_join(bakers, bakes, by = c("first_name" = "baker", "series" = "series")) %>% 
+  left_join()
+  
 
 ```
 
