@@ -52,7 +52,7 @@ sum(no_vending$entry == TRUE)/nrow(no_vending)
 
 # Problem 2
 ```{r}
-mr = read_excel("data/202309 Trash Wheel Collection Data.xlsx", sheet = "Mr. Trash Wheel", skip = 1) %>% janitor::clean_names() %>% 
+mr = read_excel("data/202409 Trash Wheel Collection Data.xlsx", sheet = "Mr. Trash Wheel", skip = 1) %>% janitor::clean_names() %>% 
   select(dumpster:homes_powered) %>% 
   filter(dumpster != "NA") %>% 
   mutate(sports_balls = as.integer(sports_balls),
