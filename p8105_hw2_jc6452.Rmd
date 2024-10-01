@@ -60,11 +60,11 @@ mr = read_excel("data/202409 Trash Wheel Collection Data.xlsx", sheet = "Mr. Tra
          year = as.numeric(year)
   )
 
-professor = read_excel("data/202309 Trash Wheel Collection Data.xlsx", sheet = "Professor Trash Wheel", skip = 1) %>% janitor::clean_names() %>%
+professor = read_excel("data/202409 Trash Wheel Collection Data.xlsx", sheet = "Professor Trash Wheel", skip = 1) %>% janitor::clean_names() %>%
   filter(dumpster != "NA") %>% 
   mutate(type = "professor_trash")
 
-gwynnda = professor_trash_wheel = read_excel("data/202309 Trash Wheel Collection Data.xlsx", sheet = "Gwynnda Trash Wheel", skip = 1) %>% janitor::clean_names() %>%
+gwynnda = professor_trash_wheel = read_excel("data/202409 Trash Wheel Collection Data.xlsx", sheet = "Gwynnda Trash Wheel", skip = 1) %>% janitor::clean_names() %>%
   filter(dumpster != "NA") %>% 
   mutate(type = "gwynnda")
 
@@ -78,10 +78,6 @@ summary(trash_wheel)
 ```
 Description of Trash Wheel data set
 
-
-```{r}
-
-```
 
 # Problem 3
 ```{r}
@@ -101,13 +97,17 @@ viewers = read_csv("data/gbb_datasets/viewers.csv", na = "NA") %>%
     names_to = "series",
     values_to = "viewership",
     names_prefix = "series_"
+  ) %>% 
+  mutate(
+    series = as.integer(series)
   )
 
-results = read_csv("data/gbb_datasets/results.csv", na = "NA") %>% 
+results = read_csv("data/gbb_datasets/results.csv", na = "NA", skip = 2) %>% 
   janitor::clean_names()
 
-bakers_bakes = left_join(bakers, bakes, by = c("first_name" = "baker", "series" = "series")) %>% 
-  left_join()
+bake_off = left_join(bakers, bakes, by = c("first_name" = "baker", "series" = "series"))%>% 
+  left_join(., results, by = c("first_name" = "baker", "series" = "series", "episode" = "episode")) %>% 
+  left_join(., viewers, by = c("series" = "series", "episode" = "episode"))  
   
 
 ```
