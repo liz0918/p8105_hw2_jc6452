@@ -116,7 +116,9 @@ bake_off = left_join(bakes, results, by = c("baker" = "baker", "series" = "serie
 write.csv(bake_off, file="data/gbb_datasets/bake_off.csv")
 ```
 
-I have used `left_join` function to merge the 3 data frames together, using appropriate column names to cobmine with for each. I have further organized the columns into an order that is more intuitive and arranged in the ascending order by `series`, `episode` and `baker_name`(alphabetically). Finally, I have exported the combined dataset into the folder that holds the original datasets. 
+I have used `left_join` function to merge the 3 data frames together, using appropriate column names to cobmine with for each. I have further organized the columns into an order that is more intuitive and arranged in the ascending order by `series`, `episode` and `baker_name`(alphabetically). Finally, I have exported the combined dataset into the folder that holds the original datasets.
+
+## Star baker or Winner based on `results`
 ```{r}
 winners =
   results %>% 
@@ -135,6 +137,7 @@ head(winners)
 ```
 There were some predictable winners like Nadiya in series 6 since she was the star baker for the last three episodes. One surprise was that the winner for series 10 was David, a baker who was never a star baker during the entire season. 
 
+## Importing and cleaning `viewers` dataset
 ```{r}
 viewers = read_csv("data/gbb_datasets/viewers.csv", na = "NA") %>% 
   janitor::clean_names() %>% 
