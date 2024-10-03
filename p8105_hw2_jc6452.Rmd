@@ -11,7 +11,7 @@ library(haven)
 
 # Problem 1
 
-## Loading Data and cleaning up
+## Loading data and cleaning up
 ```{r}
 nyc_transit = read_csv('data/NYC_Transit_Subway_Entrance_And_Exit_Data.csv', na = "") %>% 
   janitor::clean_names() %>% 
@@ -31,27 +31,13 @@ nyc_transit = read_csv('data/NYC_Transit_Subway_Entrance_And_Exit_Data.csv', na 
   select("line","station_name","station_latitude","station_longitude","route_number","route_name", "entry", "vending", "entrance_type", "ada") 
 
 ```
+The above dataset describes the nyc transit line, including details regarding, the line, station name, station's latitude/longitude, its route number and name, presence of entry and vending, type of entrance and its ADA compliance. As the dataset came a bit messy, I have organized the `route number` and `route name` accordingly. I also changed the entry variable to `boolean` vector instead of a `character` vector for easier calculation. Finally, I organized the columns using `select` function in order to make the dataset more viewer-friendly and more logical. 
 
-Questions answering some of the data *change to inline in R
-```{r}
-distinct(nyc_transit, station_name)
-
-ada_compliant = nyc_transit %>% 
-  filter(ada == TRUE)
-
-distinct(ada_compliant, station_name)
-
-no_vending = nyc_transit %>% 
-  filter(vending == "NO")
-
-sum(no_vending$entry == TRUE)/nrow(no_vending)
-
-```
-1. There are 356 distinct stations.
-2. There are 73 stations that are ADA compliant
-3. The proportion of station/entrances without vending that allow entrance is 0.377.
+There are `r nrow(nyc_transit %>% distinct(line, station_name))` distinct stations both by name and by line. There are `r nrow(nyc_transit %>% filter(ada == TRUE))` stations that are ADA compliant. The proportion of station entrances/exits without vending that allow entrance is `r nrow(nyc_transit %>% filter(vending == "NO"& entry == TRUE)) / (nrow(nyc_transit))`. 
 
 # Problem 2
+
+## Importing and cleaning dataset
 ```{r}
 mr = read_excel("data/202409 Trash Wheel Collection Data.xlsx", sheet = "Mr. Trash Wheel", skip = 1) %>% janitor::clean_names() %>% 
   select(dumpster:homes_powered) %>% 
@@ -61,26 +47,33 @@ mr = read_excel("data/202409 Trash Wheel Collection Data.xlsx", sheet = "Mr. Tra
          year = as.numeric(year)
   )
 
-professor = read_excel("data/202409 Trash Wheel Collection Data.xlsx", sheet = "Professor Trash Wheel", skip = 1) %>% janitor::clean_names() %>%
+professor = read_excel("data/202409 Trash Wheel Collection Data.xlsx", sheet = "Professor Trash Wheel", skip = 1) %>% 
+  janitor::clean_names() %>%
   filter(dumpster != "NA") %>% 
   mutate(type = "professor_trash")
 
 gwynnda = professor_trash_wheel = read_excel("data/202409 Trash Wheel Collection Data.xlsx", sheet = "Gwynnda Trash Wheel", skip = 1) %>% janitor::clean_names() %>%
   filter(dumpster != "NA") %>% 
   mutate(type = "gwynnda")
-
-
+```
+## Merging dataset
+```{r}
 trash_wheel =
   bind_rows(
     mr, professor, gwynnda) %>% 
-  janitor::clean_names()
+  janitor::clean_names() %>% 
+  select(dumpster:homes_powered)
 
 summary(trash_wheel)
 ```
-Description of Trash Wheel data set
 
+The combined dataset, `trash_wheel`, demonstrates some statistics regarding the trash accumulated by different types of trash wheel: Mr.Trash, Professor Trash and Gwynnda. Each type of trash wheel collected various trash, including sports balls, wrappers, plastic bottles, cigarette butts, polystyrene, etc. It also includes the date, weight in ton and volume in cubic yards. The special part of the trash wheel is that it can power the houses from the collected trash per ton, as shown in the `homes_powered` column. 
+
+The total number of observations in the resulting dataset is `r nrow(trash_wheel)` and it has the following variables shown for each type of trash wheel `r colnames(trash_wheel)`. The total number of weight of trash collected by Professor Trash Wheel is `r colSums(professor["weight_tons"], na.rm = TRUE)` tons.
+Gwynnda collected total of `r colSums(gwynnda %>% filter(month == "June" & year =="2022") %>% select(cigarette_butts), na.rm = TRUE)` cigarette butts in June of 2022.
 
 # Problem 3
+## Import and cleaning `bakers`, `bakes` and `results` datasets.
 ```{r}
 bakers = read_csv("data/gbb_datasets/bakers.csv") %>% 
   janitor::clean_names() %>% 
@@ -98,28 +91,32 @@ bakes = read_csv("data/gbb_datasets/bakes.csv", na = c("N/A" , "UNKNOWN", "", "U
 results = read_csv("data/gbb_datasets/results.csv", na = "NA", skip = 2) %>% 
   janitor::clean_names() %>% 
   mutate(
-    baker = str_replace_all(baker,'"Jo"', "Jo")
+    baker = str_replace_all(baker,"Joanne", "Jo")
   )
 
 ```
+The above datasets, `bakers`, `bakes`, and `results` were imported and cleaned using the processes above. Knowing that `bakers` dataset has a column with full name of the bakers unlike `bakes` and `results` that only have first name, I created a separate column with only the bakers' first name. I also noticed that there was a "Jo" in `bakes` and `results` who went by "Joanne". Based on the season this baker was in, it seemed like it was indicating the same person and have unified to the name Jo. I've also removed any NA values from the rows accordingly for each dataset.
+
+## Checking for completeness and correctness
 ```{r}
 missing_bakes = anti_join(bakers,bakes, by = c("first_name" = "baker", "series"))
 
 missing_results = anti_join(bakers, results, by = c("first_name" = "baker", "series"))
-
-missing_bakes_results = anti_join(bakers,bakes, by = c("first_name" = "baker", "series"))
 ```
 
-Merging Dataset
+Based on `missing_bakes` data frame, it seems like the `bakes` data frame is missing series 9 and 10.
+
+## Merging dataset and exporting csv file of the merged 
 ```{r}
 bake_off = left_join(bakes, results, by = c("baker" = "baker", "series" = "series", "episode" = "episode"))%>% 
   left_join(., bakers, by = c("baker" = "first_name", "series" = "series")) %>% relocate(baker_name, baker_age, baker_occupation, hometown, series, episode, signature_bake, show_stopper, technical, result) %>% 
   arrange(series, episode, baker_name)
 
 
-#write.csv(bake_off, file="data/gbb_datasets/bake_off.csv")
+write.csv(bake_off, file="data/gbb_datasets/bake_off.csv")
 ```
 
+I have used `left_join` function to merge the 3 data frames together, using appropriate column names to cobmine with for each. I have further organized the columns into an order that is more intuitive and arranged in the ascending order by `series`, `episode` and `baker_name`(alphabetically). Finally, I have exported the combined dataset into the folder that holds the original datasets. 
 ```{r}
 winners =
   results %>% 
@@ -136,7 +133,7 @@ winners =
 
 head(winners)
 ```
-
+There were some predictable winners like Nadiya in series 6 since she was the star baker for the last three episodes. One surprise was that the winner for series 10 was David, a baker who was never a star baker during the entire season. 
 
 ```{r}
 viewers = read_csv("data/gbb_datasets/viewers.csv", na = "NA") %>% 
@@ -154,13 +151,7 @@ viewers = read_csv("data/gbb_datasets/viewers.csv", na = "NA") %>%
 
 head(viewers, 10)
 
-viewers %>% 
-  filter(series == "1") %>% 
-  summarise(mean(viewership, na.rm = TRUE))
-
-viewers %>% 
-  filter(series == "5") %>% 
-  summarise(mean(viewership, na.rm = TRUE))
 ```
+I imported and organized the viewership data. The first 10 rows can be seen through the `head` function. The average viewership in season 1 was `r lapply(viewers %>% filter(series == 1) %>% select(viewership), mean, na.rm = TRUE)`. The average viewership in season 5 was `r lapply(viewers %>% filter(series == 5) %>% select(viewership), mean, na.rm = TRUE)`.
 
 
