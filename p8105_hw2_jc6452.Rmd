@@ -10,7 +10,8 @@ library(haven)
 ```
 
 # Problem 1
-Loading Data and initial cleaning
+
+## Loading Data and cleaning up
 ```{r}
 nyc_transit = read_csv('data/NYC_Transit_Subway_Entrance_And_Exit_Data.csv', na = "") %>% 
   janitor::clean_names() %>% 
@@ -26,12 +27,12 @@ nyc_transit = read_csv('data/NYC_Transit_Subway_Entrance_And_Exit_Data.csv', na 
     entry,
     "YES" ~ TRUE,
     "NO" ~ FALSE
-  )) 
-# %>% 
-#  select("line","station_name","station_latitude","station_longitude","route_number",#"route_name", "entry", "vending", "entrance_type", "ada") 
-  
+  )) %>% 
+  select("line","station_name","station_latitude","station_longitude","route_number","route_name", "entry", "vending", "entrance_type", "ada") 
+
 ```
-Questions answering some of the data
+
+Questions answering some of the data *change to inline in R
 ```{r}
 distinct(nyc_transit, station_name)
 
@@ -88,8 +89,56 @@ bakers = read_csv("data/gbb_datasets/bakers.csv") %>%
   )
 
 bakes = read_csv("data/gbb_datasets/bakes.csv", na = c("N/A" , "UNKNOWN", "", "Unknown")) %>%
-  janitor::clean_names()
+  janitor::clean_names() %>% 
+  mutate(
+    baker = str_replace_all(baker,'"Jo"', "Jo")
+  )
 
+
+results = read_csv("data/gbb_datasets/results.csv", na = "NA", skip = 2) %>% 
+  janitor::clean_names() %>% 
+  mutate(
+    baker = str_replace_all(baker,'"Jo"', "Jo")
+  )
+
+```
+```{r}
+missing_bakes = anti_join(bakers,bakes, by = c("first_name" = "baker", "series"))
+
+missing_results = anti_join(bakers, results, by = c("first_name" = "baker", "series"))
+
+missing_bakes_results = anti_join(bakers,bakes, by = c("first_name" = "baker", "series"))
+```
+
+Merging Dataset
+```{r}
+bake_off = left_join(bakes, results, by = c("baker" = "baker", "series" = "series", "episode" = "episode"))%>% 
+  left_join(., bakers, by = c("baker" = "first_name", "series" = "series")) %>% relocate(baker_name, baker_age, baker_occupation, hometown, series, episode, signature_bake, show_stopper, technical, result) %>% 
+  arrange(series, episode, baker_name)
+
+
+#write.csv(bake_off, file="data/gbb_datasets/bake_off.csv")
+```
+
+```{r}
+winners =
+  results %>% 
+  filter(
+    series <= 10, series >= 5) %>% 
+  filter(
+    result %in% c("WINNER", "STAR BAKER")
+    ) %>% 
+  select(series, episode, baker, result) %>% 
+  pivot_wider(
+    names_from = series,
+    values_from = baker
+  )
+
+head(winners)
+```
+
+
+```{r}
 viewers = read_csv("data/gbb_datasets/viewers.csv", na = "NA") %>% 
   janitor::clean_names() %>% 
   pivot_longer(
@@ -100,18 +149,18 @@ viewers = read_csv("data/gbb_datasets/viewers.csv", na = "NA") %>%
   ) %>% 
   mutate(
     series = as.integer(series)
-  )
+  ) %>% 
+  arrange(series, episode)
 
-results = read_csv("data/gbb_datasets/results.csv", na = "NA", skip = 2) %>% 
-  janitor::clean_names()
+head(viewers, 10)
 
-bake_off = left_join(bakers, bakes, by = c("first_name" = "baker", "series" = "series"))%>% 
-  left_join(., results, by = c("first_name" = "baker", "series" = "series", "episode" = "episode")) %>% 
-  left_join(., viewers, by = c("series" = "series", "episode" = "episode"))  
-  
+viewers %>% 
+  filter(series == "1") %>% 
+  summarise(mean(viewership, na.rm = TRUE))
 
+viewers %>% 
+  filter(series == "5") %>% 
+  summarise(mean(viewership, na.rm = TRUE))
 ```
-
-
 
 
